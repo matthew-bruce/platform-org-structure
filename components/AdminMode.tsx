@@ -1,7 +1,5 @@
 'use client'
 
-import { useState } from 'react'
-
 interface AdminModeProps {
   isAdminMode: boolean
   setIsAdminMode: (value: boolean) => void
@@ -24,7 +22,7 @@ export default function AdminMode({ isAdminMode, setIsAdminMode }: AdminModeProp
   return (
     <button
       onClick={toggleAdminMode}
-      className={`px-4 py-2 border-2 rounded font-semibold transition-colors ${
+      className={`px-4 py-2 border-2 rounded font-semibold transition-colors text-sm ${
         isAdminMode
           ? 'bg-rm-red border-rm-red text-white'
           : 'border-rm-light-grey bg-white hover:border-rm-red hover:text-rm-red'
