@@ -24,3 +24,21 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #6C6C6C;
 }
+
+/* Horizontal scroll styling for teams */
+.overflow-x-auto {
+  scrollbar-width: thin;
+  scrollbar-color: #DCDCDE #F5F5F5;
+}
+
+/* Prevent text selection during drag */
+.cursor-grabbing,
+.cursor-grabbing * {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Border width utilities */
+.border-3 {
+  border-width: 3px;
+}
