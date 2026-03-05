@@ -1,16 +1,17 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import type { Person, Team, Tower } from '@/lib/types'
+import type { Person, Team, Initiative } from '@/lib/types'
 import { SUPPLIER_CONFIGS } from '@/lib/types'
 
 interface SidebarProps {
   collapsed: boolean
   selectedPerson: Person | null
   teams: Team[]
-  towers: Tower[]
+  initiatives: Initiative[]
   onUpdate: (person: Person) => void
   onDelete: (id: string) => void
+  onDuplicate: (person: Person) => void
   isAdminMode: boolean
 }
 
@@ -18,9 +19,10 @@ export default function Sidebar({
   collapsed, 
   selectedPerson, 
   teams,
-  towers,
+  initiatives,
   onUpdate, 
-  onDelete, 
+  onDelete,
+  onDuplicate,
   isAdminMode 
 }: SidebarProps) {
   const [formData, setFormData] = useState<Partial<Person>>({})
@@ -37,17 +39,16 @@ export default function Sidebar({
     return (
       <div className="w-[340px] bg-white border-r border-rm-light-grey p-6 overflow-y-auto">
         <div className="bg-white border-2 border-rm-red rounded p-4 text-sm">
-          <div className="font-bold text-rm-red mb-2">30-Second Guide</div>
+          <div className="font-bold text-rm-red mb-2">Quick Guide</div>
           <div className="space-y-1 text-rm-dark-grey text-xs">
-            <div><strong className="text-rm-black">Owns Outcomes:</strong> Product teams</div>
-            <div><strong className="text-rm-black">Enables Flow:</strong> Leadership & Tower SMEs</div>
-            <div><strong className="text-rm-black">Legacy:</strong> Purple towers (Ensono)</div>
-            <div><strong className="text-rm-black">Strategic:</strong> Blue towers (Azure)</div>
+            <div><strong className="text-rm-black">L3:</strong> Platforms (Strategic/Legacy)</div>
+            <div><strong className="text-rm-black">L2:</strong> Initiatives</div>
+            <div><strong className="text-rm-black">L1:</strong> Teams</div>
           </div>
         </div>
         <div className="mt-6 text-center text-rm-dark-grey text-sm">
           Click a person to edit<br/>
-          <span className="text-xs">(Double-click to edit in-place)</span>
+          <span className="text-xs">(Double-click to quick edit name)</span>
         </div>
       </div>
     )
@@ -78,7 +79,7 @@ export default function Sidebar({
           />
         </div>
 
-        {formData.container !== 'leadership' && (
+        {formData.container !== 'leadership' && formData.container !== 'head' && (
           <>
             <div>
               <label className="block text-[10px] font-semibold text-rm-dark-grey uppercase tracking-wide mb-1.5">Team</label>
@@ -90,16 +91,16 @@ export default function Sidebar({
                   setFormData({ 
                     ...formData, 
                     team_id: teamId || null,
-                    tower_id: team?.tower_id || null,
+                    initiative_id: team?.initiative_id || null,
                     container: teamId ? 'team' : 'bench'
                   })
                 }}
                 className="w-full px-3 py-2 text-sm bg-rm-bg-grey border-2 border-rm-light-grey rounded focus:border-rm-red focus:bg-white outline-none transition"
               >
                 <option value="">Bench (Unassigned)</option>
-                {towers.map(tower => (
-                  <optgroup key={tower.id} label={`${tower.name} (${tower.platform})`}>
-                    {teams.filter(t => t.tower_id === tower.id).map(team => (
+                {initiatives.map(initiative => (
+                  <optgroup key={initiative.id} label={initiative.name}>
+                    {teams.filter(t => t.initiative_id === initiative.id).map(team => (
                       <option key={team.id} value={team.id}>{team.name}</option>
                     ))}
                   </optgroup>
@@ -110,13 +111,13 @@ export default function Sidebar({
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
-                id="isTowerSME"
-                checked={formData.is_tower_sme || false}
-                onChange={(e) => setFormData({ ...formData, is_tower_sme: e.target.checked })}
+                id="isSharedSME"
+                checked={formData.is_shared_sme || false}
+                onChange={(e) => setFormData({ ...formData, is_shared_sme: e.target.checked })}
                 className="w-4 h-4"
               />
-              <label htmlFor="isTowerSME" className="text-xs text-rm-dark-grey">
-                Tower SME (supports all teams in tower)
+              <label htmlFor="isSharedSME" className="text-xs text-rm-dark-grey">
+                Shared SME (supports across teams horizontally)
               </label>
             </div>
           </>
@@ -193,6 +194,15 @@ export default function Sidebar({
         >
           Update Person
         </button>
+
+        {selectedPerson.team_id && (
+          <button
+            onClick={() => onDuplicate(selectedPerson)}
+            className="w-full bg-white border-2 border-rm-light-grey text-rm-black py-2.5 rounded font-semibold hover:border-rm-blue hover:text-rm-blue transition text-sm"
+          >
+            📋 Duplicate (Split 50/50)
+          </button>
+        )}
 
         <button
           onClick={() => {
