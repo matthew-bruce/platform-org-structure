@@ -1,7 +1,7 @@
 export type Supplier = 'rmg' | 'cap' | 'tcs' | 'epam' | 'nh' | 'ht' | 'other'
 export type Location = 'onshore' | 'nearshore' | 'offshore'
 export type Planview = 'BAU' | 'F_GOV' | 'PR'
-export type Platform = 'strategic' | 'legacy'
+export type PlatformType = 'strategic' | 'legacy'
 export type ZoomLevel = 'compact' | 'normal' | 'detailed'
 
 export interface SupplierConfig {
@@ -13,11 +13,20 @@ export interface SupplierConfig {
   sort_order: number
 }
 
-export interface Tower {
+export interface Platform {
   id: string
   name: string
-  platform: Platform
+  type: PlatformType
   color: string
+  sort_order: number
+  created_at?: string
+  updated_at?: string
+}
+
+export interface Initiative {
+  id: string
+  name: string
+  platform_id: string
   sort_order: number
   created_at?: string
   updated_at?: string
@@ -26,7 +35,7 @@ export interface Tower {
 export interface Team {
   id: string
   name: string
-  tower_id: string
+  initiative_id: string
   supplier: Supplier
   sort_order: number
   created_at?: string
@@ -44,21 +53,12 @@ export interface Person {
   commercial_rate: number
   planview: Planview
   team_id?: string | null
-  tower_id?: string | null
-  is_tower_sme: boolean
+  initiative_id?: string | null
+  is_shared_sme: boolean
   sort_order: number
   color: string
   created_at?: string
   updated_at?: string
-}
-
-export interface TeamWithMembers extends Team {
-  members: Person[]
-}
-
-export interface TowerWithTeams extends Tower {
-  teams: TeamWithMembers[]
-  smes: Person[]
 }
 
 export const SUPPLIER_CONFIGS: Record<Supplier, SupplierConfig> = {
