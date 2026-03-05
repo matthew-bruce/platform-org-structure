@@ -287,7 +287,27 @@ export default function Home() {
           <div className="flex-1 overflow-auto">
             <OrgChart people={people} teams={teams} initiatives={initiatives} platforms={platforms} zoomLevel={zoomLevel} selectedPerson={selectedPerson} onSelectPerson={setSelectedPerson} onUpdatePerson={updatePerson} onPersonDoubleClick={handlePersonDoubleClick} isAdminMode={isAdminMode} onAddTeam={addTeam} />
           </div>
-          <BenchDrawer people={people} isOpen={benchOpen} onToggle={() => setBenchOpen(!benchOpen)} zoomLevel={zoomLevel} selectedPerson={selectedPerson} onSelectPerson={setSelectedPerson} onPersonDoubleClick={handlePersonDoubleClick} onDragStart={() => {}} onDragEnd={() => {}} isAdminMode={isAdminMode} />
+          <div
+  onDragOver={(e) => e.preventDefault()}
+  onDrop={(e) => {
+    e.preventDefault()
+    // This will be handled by BenchDrawer's internal drop logic
+    // The person will be moved to bench in OrgChart
+  }}
+>
+  <BenchDrawer
+    people={people}
+    isOpen={benchOpen}
+    onToggle={() => setBenchOpen(!benchOpen)}
+    zoomLevel={zoomLevel}
+    selectedPerson={selectedPerson}
+    onSelectPerson={setSelectedPerson}
+    onPersonDoubleClick={handlePersonDoubleClick}
+    onDragStart={() => {}}
+    onDragEnd={() => {}}
+    isAdminMode={isAdminMode}
+  />
+</div>
         </div>
       </div>
     </div>
