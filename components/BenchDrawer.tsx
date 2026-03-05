@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import type { Person, ZoomLevel } from '@/lib/types'
 import PersonCard from './PersonCard'
 
@@ -28,11 +29,27 @@ export default function BenchDrawer({
   onDragEnd,
   isAdminMode
 }: BenchDrawerProps) {
+  const [isDropZone, setIsDropZone] = useState(false)
+  
   const benchPeople = people.filter(p => p.container === 'bench' || (!p.team_id && p.container !== 'leadership' && p.container !== 'head'))
   const count = benchPeople.length
 
   return (
-    <div className="w-full bg-white border-t-2 border-rm-light-grey shadow-lg">
+    <div 
+      className={`w-full bg-white border-t-2 shadow-lg transition-all ${
+        isDropZone ? 'border-rm-red bg-rm-red bg-opacity-5' : 'border-rm-light-grey'
+      }`}
+      onDragOver={(e) => {
+        e.preventDefault()
+        setIsDropZone(true)
+      }}
+      onDragLeave={() => setIsDropZone(false)}
+      onDrop={(e) => {
+        e.preventDefault()
+        setIsDropZone(false)
+        // Trigger will be handled by parent
+      }}
+    >
       {/* Header */}
       <div 
         onClick={onToggle}
@@ -41,45 +58,4 @@ export default function BenchDrawer({
         <div className="flex items-center gap-3">
           <span className="text-2xl">🏖️</span>
           <div>
-            <h3 className="font-bold text-rm-black text-sm">Bench</h3>
-            <p className="text-xs text-rm-dark-grey">
-              {count === 0 ? 'Empty' : `${count} unassigned ${count === 1 ? 'person' : 'people'}`}
-            </p>
-          </div>
-        </div>
-        <button className="text-rm-dark-grey hover:text-rm-red transition text-xl font-bold">
-          {isOpen ? '▼' : '▲'}
-        </button>
-      </div>
-
-      {/* Content */}
-      {isOpen && (
-        <div className="px-6 py-4 max-h-64 overflow-y-auto border-t border-rm-light-grey bg-rm-bg-grey">
-          {count === 0 ? (
-            <div className="text-center py-8 text-rm-dark-grey text-sm">
-              No people on the bench. All resources are assigned!
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
-              {benchPeople.map(person => (
-                <PersonCard
-                  key={person.id}
-                  person={person}
-                  zoomLevel={zoomLevel}
-                  isSelected={selectedPerson?.id === person.id}
-                  onClick={() => onSelectPerson(person)}
-                  onDoubleClick={() => onPersonDoubleClick(person)}
-                  onDragStart={(e) => {
-                    onDragStart(person)
-                  }}
-                  onDragEnd={onDragEnd}
-                  isAdminMode={isAdminMode}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
+            <h3 className="font
