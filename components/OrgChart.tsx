@@ -32,6 +32,8 @@ export default function OrgChart({
   onAddTeam
 }: OrgChartProps) {
   const [draggedPerson, setDraggedPerson] = useState<Person | null>(null)
+  const [dropTarget, setDropTarget] = useState<string | null>(null)
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null)
 
   const handleDragStart = (person: Person) => {
     setDraggedPerson(person)
@@ -39,20 +41,98 @@ export default function OrgChart({
 
   const handleDragEnd = () => {
     setDraggedPerson(null)
+    setDropTarget(null)
+    setHoverIndex(null)
   }
 
-  const handleDrop = (teamId: string | null, initiativeId: string) => {
+  const handleDragOver = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault()
+    setDropTarget(targetId)
+  }
+
+  const handleDragLeave = () => {
+    setDropTarget(null)
+    setHoverIndex(null)
+  }
+
+  const handlePersonDragOver = (e: React.DragEvent, targetPerson: Person, index: number) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setHoverIndex(index)
+  }
+
+  const handleDropOnPerson = (e: React.DragEvent, targetPerson: Person, targetIndex: number) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    if (!draggedPerson || draggedPerson.id === targetPerson.id) {
+      handleDragEnd()
+      return
+    }
+
+    // Reordering within same team
+    if (draggedPerson.team_id === targetPerson.team_id && draggedPerson.team_id) {
+      const teamMembers = people
+        .filter(p => p.team_id === draggedPerson.team_id)
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+      
+      const draggedIndex = teamMembers.findIndex(p => p.id === draggedPerson.id)
+      
+      // Update sort orders
+      teamMembers.forEach((member, idx) => {
+        let newOrder = idx
+        if (idx === draggedIndex) {
+          newOrder = targetIndex
+        } else if (draggedIndex < targetIndex) {
+          if (idx > draggedIndex && idx <= targetIndex) newOrder = idx - 1
+        } else {
+          if (idx >= targetIndex && idx < draggedIndex) newOrder = idx + 1
+        }
+        
+        if (newOrder !== member.sort_order) {
+          onUpdatePerson({ ...member, sort_order: newOrder })
+        }
+      })
+    }
+    
+    handleDragEnd()
+  }
+
+  const handleDropOnTeam = (e: React.DragEvent, teamId: string, initiativeId: string) => {
+    e.preventDefault()
+    
+    if (!draggedPerson) return
+
+    const team = teams.find(t => t.id === teamId)
+    const teamMembers = people.filter(p => p.team_id === teamId)
+    
+    const updatedPerson = {
+      ...draggedPerson,
+      team_id: teamId,
+      initiative_id: team?.initiative_id || initiativeId,
+      container: 'team',
+      sort_order: teamMembers.length
+    }
+
+    onUpdatePerson(updatedPerson)
+    handleDragEnd()
+  }
+
+  const handleDropOnBench = (e: React.DragEvent) => {
+    e.preventDefault()
+    
     if (!draggedPerson) return
 
     const updatedPerson = {
       ...draggedPerson,
-      team_id: teamId,
-      initiative_id: teamId ? teams.find(t => t.id === teamId)?.initiative_id || null : null,
-      container: teamId ? 'team' : 'bench'
+      team_id: null,
+      initiative_id: null,
+      container: 'bench',
+      sort_order: 0
     }
 
     onUpdatePerson(updatedPerson)
-    setDraggedPerson(null)
+    handleDragEnd()
   }
 
   const head = people.filter(p => p.container === 'head')
@@ -144,38 +224,50 @@ export default function OrgChart({
                       {/* Teams Horizontal Scroll */}
                       <div className="flex gap-3 overflow-x-auto pb-2 mb-3">
                         {initiativeTeams.map(team => {
-                          const teamMembers = people.filter(p => p.team_id === team.id).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+                          const teamMembers = people
+                            .filter(p => p.team_id === team.id)
+                            .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+                          
+                          const isDropping = dropTarget === team.id
                           
                           return (
                             <div
                               key={team.id}
-                              className="flex-shrink-0 bg-white rounded border-2 border-rm-light-grey p-3"
+                              className={`flex-shrink-0 bg-white rounded border-2 p-3 transition-all ${
+                                isDropping ? 'border-rm-red bg-rm-red bg-opacity-5 shadow-lg' : 'border-rm-light-grey'
+                              }`}
                               style={{ width: zoomLevel === 'compact' ? '180px' : zoomLevel === 'detailed' ? '260px' : '220px' }}
-                              onDragOver={(e) => e.preventDefault()}
-                              onDrop={(e) => {
-                                e.preventDefault()
-                                handleDrop(team.id, initiative.id)
-                              }}
+                              onDragOver={(e) => handleDragOver(e, team.id)}
+                              onDragLeave={handleDragLeave}
+                              onDrop={(e) => handleDropOnTeam(e, team.id, initiative.id)}
                             >
                               <div className="font-bold text-xs text-rm-black mb-2 pb-2 border-b border-rm-light-grey">
                                 {team.name}
                               </div>
                               <div className="space-y-2">
                                 {teamMembers.length === 0 ? (
-                                  <div className="text-center py-4 text-xs text-rm-dark-grey">Empty</div>
+                                  <div className="text-center py-4 text-xs text-rm-dark-grey">
+                                    Drop here
+                                  </div>
                                 ) : (
-                                  teamMembers.map(person => (
-                                    <PersonCard
+                                  teamMembers.map((person, idx) => (
+                                    <div
                                       key={person.id}
-                                      person={person}
-                                      zoomLevel={zoomLevel}
-                                      isSelected={selectedPerson?.id === person.id}
-                                      onClick={() => onSelectPerson(person)}
-                                      onDoubleClick={() => onPersonDoubleClick(person)}
-                                      onDragStart={(e) => handleDragStart(person)}
-                                      onDragEnd={handleDragEnd}
-                                      isAdminMode={isAdminMode}
-                                    />
+                                      className={hoverIndex === idx && dropTarget === team.id ? 'border-t-2 border-rm-red pt-2' : ''}
+                                      onDragOver={(e) => handlePersonDragOver(e, person, idx)}
+                                      onDrop={(e) => handleDropOnPerson(e, person, idx)}
+                                    >
+                                      <PersonCard
+                                        person={person}
+                                        zoomLevel={zoomLevel}
+                                        isSelected={selectedPerson?.id === person.id}
+                                        onClick={() => onSelectPerson(person)}
+                                        onDoubleClick={() => onPersonDoubleClick(person)}
+                                        onDragStart={(e) => handleDragStart(person)}
+                                        onDragEnd={handleDragEnd}
+                                        isAdminMode={isAdminMode}
+                                      />
+                                    </div>
                                   ))
                                 )}
                               </div>
@@ -188,7 +280,7 @@ export default function OrgChart({
                       {sharedSMEs.length > 0 && (
                         <div className="border-2 rounded p-3 bg-white" style={{ borderColor: platform.color }}>
                           <div className="text-[10px] font-bold uppercase tracking-wide text-rm-dark-grey mb-2">
-                            Shared SMEs
+                            Shared SMEs (supports across teams horizontally)
                           </div>
                           <div className="grid grid-cols-2 gap-2">
                             {sharedSMEs.map(person => (
