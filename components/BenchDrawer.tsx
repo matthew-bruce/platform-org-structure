@@ -28,11 +28,11 @@ export default function BenchDrawer({
   onDragEnd,
   isAdminMode
 }: BenchDrawerProps) {
-  const benchPeople = people.filter(p => p.container === 'bench' || (!p.team_id && p.container !== 'leadership'))
+  const benchPeople = people.filter(p => p.container === 'bench' || (!p.team_id && p.container !== 'leadership' && p.container !== 'head'))
   const count = benchPeople.length
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-rm-light-grey shadow-lg z-50 transition-all">
+    <div className="w-full bg-white border-t-2 border-rm-light-grey shadow-lg">
       {/* Header */}
       <div 
         onClick={onToggle}
@@ -57,7 +57,7 @@ export default function BenchDrawer({
         <div className="px-6 py-4 max-h-64 overflow-y-auto border-t border-rm-light-grey bg-rm-bg-grey">
           {count === 0 ? (
             <div className="text-center py-8 text-rm-dark-grey text-sm">
-              No people on the bench. All resources are assigned to teams!
+              No people on the bench. All resources are assigned!
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
