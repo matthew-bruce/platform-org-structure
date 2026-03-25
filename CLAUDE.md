@@ -8,8 +8,8 @@
 
 A visual organisational structure tool for RMG's Platform & Build function. It allows the team to view, manage, and present the platform org structure in a clean, interactive format — replacing static PowerPoint org charts with a live, maintainable alternative.
 
-**Live URL:** [add your Vercel URL here]
-**Status:** In Progress — drag/drop is working, approaching PoC completion
+**Live URL:** https://platform-org-structure.vercel.app \
+**Status:** In Progress — drag/drop is working, approaching PoC completion \
 **Stack:** React (Vite), [Supabase / localStorage], Vercel
 
 ---
